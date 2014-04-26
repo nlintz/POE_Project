@@ -1,0 +1,8 @@
+Solenoid - The Solenoid class is responsible for handling the pneumatic arm solenoids
+	Initialization:
+		Solenoid solenoid(<pin number>);
+
+	Methods:
+		void solenoid.open(); // opens the solenoid
+		void solenoid.close(); // closes the solenoid
+		char * solenoid.getState(); // Returns a string, either "OPEN" or "CLOSE"
