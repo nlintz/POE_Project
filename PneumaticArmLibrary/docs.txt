@@ -3,6 +3,14 @@ Solenoid - The Solenoid class is responsible for handling the pneumatic arm sole
 		Solenoid solenoid(<pin number>);
 
 	Methods:
-		void solenoid.open(); // opens the solenoid
-		void solenoid.close(); // closes the solenoid
-		char * solenoid.getState(); // Returns a string, either "OPEN" or "CLOSE"
+		(void) solenoid.open(); // opens the solenoid
+		(void) solenoid.close(); // closes the solenoid
+		(char *) solenoid.getState(); // Returns a string, either "OPEN" or "CLOSE"
+
+Force Sensor - The ForceSensor class is responsible for handling inputs from the force sensor hardware
+	Initialization:
+		ForceSensor forceSensor(<pin number (note: must be an analog pin)>);
+
+	Methods:
+		(void) forceSensor.calibrate // calibrates the force sensor to get a zero references
+		(float) forceSensor.getForce // Returns a voltage reading of the force from -2.5 to 2.5 volts (note still untested)
