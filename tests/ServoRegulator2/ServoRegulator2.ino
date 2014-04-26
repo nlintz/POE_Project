@@ -33,6 +33,9 @@ void velocity(int n){
       pos-= n;
     }
     servo.write(pos);
+    Serial.println("Servo Position (variable): "+ String(pos));
+    Serial.println("Servo Position (library): "+ String(servo.read() ) );
+    //Serial.print("");
     delay(50);
   }
 }
@@ -44,6 +47,7 @@ void loop()
   int n_max = 20;
   for(int i=1; i<n_max; i+=1){
     velocity(i);
+    Serial.print("Step size: ");
     Serial.println(i);
   }
 }
