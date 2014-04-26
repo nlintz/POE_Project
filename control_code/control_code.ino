@@ -1,59 +1,99 @@
 
-int posSensorPin= A0;
-int solenoidPin= 2;  
+#include <Servo.h>
+
+int posSensorPin = A0;
+int forceSensorPin = A1;
+int solenoidPin = 2;
+
+//not final value
+const float angleMax = 90.0;
+const float angleMin = 0.0;
 Servo servo;
 
+//whe the sensor is below this value, treat it as zero
+float forceCutoff = 0.1
+
+void setup(){
+  servo.attach(3);  
+}
+
 enum ErrorCode{
-	solenoid, position, servo
+	solenoid, angle, servo
 };
 
-float get_desired_velocity(){
-	/*
-	 * Processes sensor data to return desired velocity
-	 */
-	
-	return velocity
+int forceToStep(float force, int angle){
+  if (abs(force) <= forceCutoff){
+    step_size = 0;
+  }
+  else {
+    // convert force voltage into servo step
+    // sketch
+    step_size = (int) 4*force;
+  }
+  
+  // don't let it move past end-points
+  if ((step_size > 0) && (angle >= angleMax)){
+     step_size = 0;
+  }
+  if ((step_size < 0) && (angle <= angleMin)){
+    step_size = 0;
+  }
+  
+  return step_size
 }
 
-float current_pressure(){
-	/*
-	 * Uses angle sensor to measure pressure in air muscle
-	 */
-	 
-	 return pressure
+int desired_step(){
+  /* 
+   * Processes sensor data to return desired velocity
+   */
+        
+  //get force value
+  force = ForceSensor.getForce()
+        
+  //get angle value
+  angle = AngleSensor.getAngle()
+  
+  // compute step
+  step_size = forceToStep(force, angle)
+
+  return step_size
 }
 
-void synchronize_converter() {
-	
+void moveServo(int step_size){
+
+  // get current servo position
+  current_pos = servo.read();
+  
+  // move the servo
+  servo.write(current_pos + step_size);
+  
+  // delay so the servo has time to move
+  delay(50);
 }
 
-ErrorCode go_down(velocity){
-	/*
-	 * Control loop for opening (deflating)  the arm
-	 */
+ErrorCode go_down(step_size){
+  /*
+   * Control loop for opening (deflating)  the arm
+   */
 	
-	error = 0
-	do{
-		given velocity, calculate pressure delta
-		
-		set muscle to exhaust
-		
-		
-
-		
-		synchronize converter
-		get_desired_velocity
-		
-		// if behaviour is not as expected, return non-zero error
-		calculate expected position delta
-		get actual position delta
-		if position delta not expected?
-			set proper error code
-			break
-	} while(want to go down?)
+  ErrorCode error = angle;
+  do{
+    
+    old_angle = angleSensor.getAngle();
 	
-	set muscle to reservoir
-	return error
+    moveConverter(step_size);
+		
+    // if behaviour is not as expected, return non-zero error
+    new_angle = angleSensor.getAngle();
+    
+    if (new_angle >= old_angle){
+      error = angle;
+      break;
+    }
+    setp_size = desired_step();
+  } while(velocity < 0);
+  
+  return error;
 }
 
 ErrorCode go_up(velocity){
@@ -65,12 +105,12 @@ ErrorCode go_up(velocity){
 	do{
 		set muscle to reservoir
 		move converter(velocity)
-		get_desired_velocity
+		desired_step
 		
 		// if behaviour is not as expected, return non-zero error
-		calculate expected position delta
-		get actual position delta
-		if position delta not expected?
+		calculate expected angle delta
+		get actual angle delta
+		if angle delta not expected?
 			set proper error code
 			break
 	} while(want to go up?)
@@ -86,12 +126,12 @@ ErrorCode stay_put(velocity){
 	error = 0
 	do{
 		set muscle to reservoir
-		get_desired_velocity
+		desired_step
 		
 		// if behaviour is not as expected, return non-zero error
-		calculate expected position delta
-		get actual position delta
-		if position delta not expected?
+		calculate expected angle delta
+		get actual angle delta
+		if angle delta not expected?
 			set proper error code
 			break
 	} while(want to go up?)
