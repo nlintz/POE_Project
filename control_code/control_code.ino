@@ -17,6 +17,7 @@ void setup(){
   servo.attach(3);  
 }
 
+//NEEDS TO BE UPDATED
 enum ErrorCode{
 	solenoid, angle, servo
 };
@@ -44,7 +45,7 @@ int forceToStep(float force, int angle){
 
 int desired_step(){
   /* 
-   * Processes sensor data to return desired velocity
+   * Processes sensor data to return desired step_size
    */
         
   //get force value
@@ -59,7 +60,7 @@ int desired_step(){
   return step_size
 }
 
-void moveServo(int step_size){
+void moveConverter(int step_size){
 
   // get current servo position
   current_pos = servo.read();
@@ -80,7 +81,6 @@ ErrorCode go_down(step_size){
   do{
     
     old_angle = angleSensor.getAngle();
-	
     moveConverter(step_size);
 		
     // if behaviour is not as expected, return non-zero error
@@ -90,35 +90,35 @@ ErrorCode go_down(step_size){
       error = angle;
       break;
     }
-    setp_size = desired_step();
-  } while(velocity < 0);
+    step_size = desired_step();
+  } while(step_size < 0);
   
   return error;
 }
 
-ErrorCode go_up(velocity){
-	/*
-	 * Control loop for closing (inflating) the arm
-	 */
+ErrorCode go_up(step_size){
+  /*
+   * Control loop for closing (inflating) the arm
+   */
 	
-	error = 0
-	do{
-		set muscle to reservoir
-		move converter(velocity)
-		desired_step
+  error = 0
+  do{
+    old_angle = angleSensor.getAngle();
+    moveConverter(step_size);
 		
-		// if behaviour is not as expected, return non-zero error
-		calculate expected angle delta
-		get actual angle delta
-		if angle delta not expected?
-			set proper error code
-			break
-	} while(want to go up?)
+    // if behaviour is not as expected, return non-zero error
+    new_angle = angleSensor.getAngle();
+    if (new_angle <= old_angle){
+      error = angle;
+      break;
+    }
+    step_size = desired_step();
+  } while(step_size > 0)
 	
-	return error
+  return error
 }
 
-ErrorCode stay_put(velocity){
+ErrorCode stay_put(step_size){
 	/*
 	 * Control loop for not moving the arm (no real control, just error detection)
 	 */
@@ -146,22 +146,22 @@ error(error_code){
 
 
 void loop() {
-	/* 
-	 * Main control loop.  Acts as a delegator to the three other control loops:
-	 * 	1 go up
-	 *	2 go down
-	 *	3 stay put
-	 */
+  /* 
+   * Main control loop.  Acts as a delegator to the three other control loops:
+   * 	1 go up
+   *	2 go down
+   *	3 stay put
+   */
 	
-	get desired velocity
+  get desired step_size
 	
-	if (want to go up?)
-		error = go_up(velocity)
-	else if(want to go down?)
-		error = go down(velocity)
-	else
-		error = stay_put(velocity)
-	
-	if error:
-		error handler(error)
+  if (want to go up?)
+    error = go_up(step_size)
+  else if(want to go down?)
+    error = go down(step_size)
+  else
+    error = stay_put(step_size)
+
+  if error:
+    error handler(error)
 }
