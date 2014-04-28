@@ -1,28 +1,30 @@
+#include <ForceSensor.h>
+#include <Solenoid.h>
+#include <AngleSensor.h>
 
 #include <Servo.h>
 
-int posSensorPin = A0;
-int forceSensorPin = A1;
-int solenoidPin = 2;
+const int angleSensorPin = A0;
+const int forceSensorPin = A1;
+const int solenoidPin = 2;
 
 //not final value
 const float angleMax = 90.0;
 const float angleMin = 0.0;
+
+// devices
 Servo servo;
+ForceSensor force_sensor (forceSensorPin);
+Solenoid solenoid (solenoidPin);
+AngleSensor angle_sensor (angleSensorPin);
 
-//whe the sensor is below this value, treat it as zero
-float forceCutoff = 0.1
 
-void setup(){
-  servo.attach(3);  
-}
+//when the sensor is below this value, treat it as zero
+const float forceCutoff = 0.1;
 
-//NEEDS TO BE UPDATED
-enum ErrorCode{
-	solenoid, angle, servo
-};
 
 int forceToStep(float force, int angle){
+  int step_size;
   if (abs(force) <= forceCutoff){
     step_size = 0;
   }
@@ -40,7 +42,7 @@ int forceToStep(float force, int angle){
     step_size = 0;
   }
   
-  return step_size
+  return step_size;
 }
 
 int desired_step(){
@@ -49,20 +51,24 @@ int desired_step(){
    */
         
   //get force value
-  force = ForceSensor.getForce()
+  float force;
+  force = force_sensor.getForce();
         
   //get angle value
-  angle = AngleSensor.getAngle()
+  int angle;
+  angle = angle_sensor.getAngle();
   
   // compute step
-  step_size = forceToStep(force, angle)
+  int step_size;
+  step_size = forceToStep(force, angle);
 
-  return step_size
+  return step_size;
 }
 
 void moveConverter(int step_size){
 
   // get current servo position
+  int current_pos;
   current_pos = servo.read();
   
   // move the servo
@@ -72,22 +78,24 @@ void moveConverter(int step_size){
   delay(50);
 }
 
-ErrorCode go_down(step_size){
+int go_down(int step_size){
   /*
    * Control loop for opening (deflating)  the arm
    */
 	
-  ErrorCode error = angle;
+  int error = 0;
+  int old_angle, new_angle;
+  
   do{
     
-    old_angle = angleSensor.getAngle();
+    old_angle = angle_sensor.getAngle();
     moveConverter(step_size);
 		
     // if behaviour is not as expected, return non-zero error
-    new_angle = angleSensor.getAngle();
+    new_angle = angle_sensor.getAngle();
     
     if (new_angle >= old_angle){
-      error = angle;
+      error = 1;
       break;
     }
     step_size = desired_step();
@@ -95,55 +103,79 @@ ErrorCode go_down(step_size){
   
   return error;
 }
-
-ErrorCode go_up(step_size){
+//
+int go_up(int step_size){
   /*
    * Control loop for closing (inflating) the arm
    */
 	
-  error = 0
+  int error = 0;
+  int old_angle, new_angle;
   do{
-    old_angle = angleSensor.getAngle();
+    old_angle = angle_sensor.getAngle();
     moveConverter(step_size);
 		
     // if behaviour is not as expected, return non-zero error
-    new_angle = angleSensor.getAngle();
+    new_angle = angle_sensor.getAngle();
     if (new_angle <= old_angle){
-      error = angle;
+      error = 1;
       break;
     }
     step_size = desired_step();
-  } while(step_size > 0)
+  } while(step_size > 0);
 	
-  return error
+  return error;
 }
 
-ErrorCode stay_put(step_size){
-	/*
-	 * Control loop for not moving the arm (no real control, just error detection)
-	 */
+int stay_put(){
+  /*
+   * Control loop for not moving the arm (no real control, just error detection)
+   */
 	
-	error = 0
-	do{
-		set muscle to reservoir
-		desired_step
-		
-		// if behaviour is not as expected, return non-zero error
-		calculate expected angle delta
-		get actual angle delta
-		if angle delta not expected?
-			set proper error code
-			break
-	} while(want to go up?)
+  int error = 0;
+  int old_angle, new_angle, step_size;
+  
+  //tollerence in movement
+  int tol = 1;
+  do{
+    old_angle = angle_sensor.getAngle();
+    
+    // wait a bit to make sure the arm isn't moving
+    delay(50);
+
+    // if behaviour is not as expected, return non-zero error
+    new_angle = angle_sensor.getAngle();
+    if (abs(new_angle - old_angle) > tol){
+      error = 1;
+      break;
+    }
+    step_size = desired_step();
+  } while(step_size > 0);
 	
-	return error
+  return error;
 }
 
-error(error_code){
-
+void error_handler (int error_code){
+  // vent error muscle
+  solenoid.close();
+  // set converter to 0psi output
+  moveConverter(-servo.read());
+  // wait until the thing is reset
+  while(true)
+    delay(50);
 }
 
 
+void setup(){
+  servo.attach(3);
+  force_sensor.calibrate();
+  
+  // set solenoid to resevoir
+  solenoid.open();
+  
+  // set converter to 0psi output to begin
+  moveConverter(-servo.read());
+}
 
 void loop() {
   /* 
@@ -152,16 +184,17 @@ void loop() {
    *	2 go down
    *	3 stay put
    */
-	
-  get desired step_size
-	
-  if (want to go up?)
-    error = go_up(step_size)
-  else if(want to go down?)
-    error = go down(step_size)
+  
+  int step_size;
+  step_size = desired_step();
+  int error;
+  if (step_size > 0)
+    error = go_up(step_size);
+  else if(step_size < 0)
+    error = go_down(step_size);
   else
-    error = stay_put(step_size)
+    error = stay_put();
 
-  if error:
-    error handler(error)
+  if (error)
+    error_handler(error);
 }
