@@ -42,7 +42,7 @@ int forceToStep(float force, int angle){
     step_size = 0;
   }
   
-  return step_size;
+  return  -step_size;
 }
 
 int desired_step(){
@@ -99,7 +99,7 @@ int go_down(int step_size){
       break;
     }
     step_size = desired_step();
-  } while(step_size < 0);
+  } while(step_size > 0);
   
   return error;
 }
@@ -122,7 +122,7 @@ int go_up(int step_size){
       break;
     }
     step_size = desired_step();
-  } while(step_size > 0);
+  } while(step_size < 0);
 	
   return error;
 }
@@ -159,7 +159,7 @@ void error_handler (int error_code){
   // vent error muscle
   solenoid.close();
   // set converter to 0psi output
-  moveConverter(-servo.read());
+  moveConverter(180 - servo.read());
   // wait until the thing is reset
   while(true)
     delay(50);
@@ -188,9 +188,9 @@ void loop() {
   int step_size;
   step_size = desired_step();
   int error;
-  if (step_size > 0)
+  if (step_size < 0)
     error = go_up(step_size);
-  else if(step_size < 0)
+  else if(step_size > 0)
     error = go_down(step_size);
   else
     error = stay_put();
