@@ -174,7 +174,7 @@ void setup(){
   solenoid.open();
   
   // set converter to 0psi output to begin
-  moveConverter(-servo.read());
+  moveConverter(180 - servo.read());
 }
 
 void loop() {
