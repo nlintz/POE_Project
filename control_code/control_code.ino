@@ -150,7 +150,7 @@ int stay_put(){
       break;
     }
     step_size = desired_step();
-  } while(step_size > 0);
+  } while(step_size == 0); //NOTE: make threshold?
 	
   return error;
 }
