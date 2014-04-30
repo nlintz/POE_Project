@@ -1,6 +1,6 @@
 //
 //  AngleSensor.cpp
-//  
+//
 //
 //  Created by Team Arms Race on 4/26/14.
 //
@@ -20,6 +20,6 @@ float AngleSensor::getAngle()
     int reading = analogRead(_pin);
 	//assumed reading 0 to 2.5 volts on a 0 to 1024 scale
 	//and a angle range of 0 to 90
-    float angle = (90.0/512.0)*(float)reading;
+    int angle = map(reading, 455, 660, 0, 52);
     return angle;
 }
