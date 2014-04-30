@@ -1,49 +1,36 @@
 #include <ForceSensor.h>
 #include <Solenoid.h>
 #include <AngleSensor.h>
-
+#include <Regulator.h>
 #include <Servo.h>
+
 
 const int angleSensorPin = A0;
 const int forceSensorPin = A1;
 const int solenoidPin = 2;
+const int regulatorPin = 3;
 
-//not final value
-const float angleMax = 90.0;
-const float angleMin = 0.0;
+//NOTE: not final values
+const float MAX_ANGLE = 53.0;
+const float MIN_ANGLE = 0.0;
+
+//when the sensor is below this value, treat it as zero
+const float forceCutoff = 0.1;
 
 // devices
-Servo servo;
+Regulator regulator (regulatorPin);
 ForceSensor force_sensor (forceSensorPin);
 Solenoid solenoid (solenoidPin);
 AngleSensor angle_sensor (angleSensorPin);
 
 
-//when the sensor is below this value, treat it as zero
-const float forceCutoff = 0.1;
-
-
-int forceToStep(float force, int angle){
+int forceToStep(float force){
   int step_size;
-  if (abs(force) <= forceCutoff){
-    step_size = 0;
-  }
-  else {
-    // convert force voltage into servo step
-    // sketch
-    step_size = (int) 4*force;
-  }
+  step_size = (int) 4*force;
   
-  // don't let it move past end-points
-  if ((step_size > 0) && (angle >= angleMax)){
-     step_size = 0;
-  }
-  if ((step_size < 0) && (angle <= angleMin)){
-    step_size = 0;
-  }
-  
-  return  -step_size;
+  return  step_size;
 }
+
 
 int desired_step(){
   /* 
@@ -53,30 +40,27 @@ int desired_step(){
   //get force value
   float force;
   force = force_sensor.getForce();
+  
+  //if it is below trheshold, don't move
+  if (abs(force) <= forceCutoff)
+  	force = 0;
         
   //get angle value
   int angle;
   angle = angle_sensor.getAngle();
   
-  // compute step
-  int step_size;
-  step_size = forceToStep(force, angle);
+  //don't go past the end points
+  int stop = 0;
+  if (force > 0 && angle < MAX_ANGLE)
+  	stop = 1;
+  else if (force < 0 && angle > MIN_ANGLE)
+  	stop = 1;
+  	
+  int step_size = forceToStep(force) * stop;	
 
   return step_size;
 }
 
-void moveConverter(int step_size){
-
-  // get current servo position
-  int current_pos;
-  current_pos = servo.read();
-  
-  // move the servo
-  servo.write(current_pos + step_size);
-  
-  // delay so the servo has time to move
-  delay(50);
-}
 
 int go_down(int step_size){
   /*
@@ -89,7 +73,7 @@ int go_down(int step_size){
   do{
     
     old_angle = angle_sensor.getAngle();
-    moveConverter(step_size);
+    regulator.decreasePressure(step_size);
 		
     // if behaviour is not as expected, return non-zero error
     new_angle = angle_sensor.getAngle();
@@ -99,7 +83,7 @@ int go_down(int step_size){
       break;
     }
     step_size = desired_step();
-  } while(step_size > 0);
+  } while(step_size < 0);
   
   return error;
 }
@@ -113,7 +97,7 @@ int go_up(int step_size){
   int old_angle, new_angle;
   do{
     old_angle = angle_sensor.getAngle();
-    moveConverter(step_size);
+    regulator.increasePressure(step_size);
 		
     // if behaviour is not as expected, return non-zero error
     new_angle = angle_sensor.getAngle();
@@ -122,7 +106,7 @@ int go_up(int step_size){
       break;
     }
     step_size = desired_step();
-  } while(step_size < 0);
+  } while(step_size > 0);
 	
   return error;
 }
@@ -159,7 +143,7 @@ void error_handler (int error_code){
   // vent error muscle
   solenoid.close();
   // set converter to 0psi output
-  moveConverter(180 - servo.read());
+  regulator.zero();
   // wait until the thing is reset
   while(true)
     delay(50);
@@ -167,14 +151,14 @@ void error_handler (int error_code){
 
 
 void setup(){
-  servo.attach(3);
+  // calibrate force sensor
   force_sensor.calibrate();
   
   // set solenoid to resevoir
   solenoid.open();
   
-  // set converter to 0psi output to begin
-  moveConverter(180 - servo.read());
+  // set regulator to 0psi output to begin
+  regulator.zero();
 }
 
 void loop() {
