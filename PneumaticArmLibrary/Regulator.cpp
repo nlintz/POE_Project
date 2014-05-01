@@ -17,7 +17,7 @@ Regulator::Regulator(int pin)
 }
 
 void Regulator::zero(){
-	servo.write(180);
+	servo.write(170);
 }
 
 void Regulator::increasePressure(int step_size){

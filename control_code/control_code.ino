@@ -172,9 +172,9 @@ void loop() {
   int step_size;
   step_size = desired_step();
   int error;
-  if (step_size < 0)
+  if (step_size > 0)
     error = go_up(step_size);
-  else if(step_size > 0)
+  else if(step_size < 0)
     error = go_down(step_size);
   else
     error = stay_put();
