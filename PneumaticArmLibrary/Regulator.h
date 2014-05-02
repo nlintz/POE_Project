@@ -22,7 +22,7 @@ public:
 
 private:
     int _pin;
-    Servo servo;
+    Servo _servo;
 };
 
 #endif

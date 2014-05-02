@@ -7,12 +7,12 @@
 
 const int angleSensorPin = A0;
 const int forceSensorPin = A1;
-const int solenoidPin = 2;
+const int solenoidPin = 9;
 const int regulatorPin = 3;
 
 //NOTE: not final values
-const float MAX_ANGLE = 53.0;
-const float MIN_ANGLE = 0.0;
+const float MAX_ANGLE = 49.0;
+const float MIN_ANGLE = 5.0;
 
 //when the sensor is below this value, treat it as zero
 const float forceCutoff = 0.1;
@@ -47,8 +47,8 @@ int desired_step(){
         
   //get angle value
   int angle;
-  angle = angle_sensor.getAngle();
-  
+//  angle = angle_sensor.getAngle();
+  angle = 20;
   //don't go past the end points
   int stop = 0;
   if (force > 0 && angle < MAX_ANGLE)
@@ -57,7 +57,7 @@ int desired_step(){
   	stop = 1;
   	
   int step_size = forceToStep(force) * stop;	
-
+//  Serial.println(step_size);
   return step_size;
 }
 
@@ -78,10 +78,10 @@ int go_down(int step_size){
     // if behaviour is not as expected, return non-zero error
     new_angle = angle_sensor.getAngle();
     
-    if (new_angle >= old_angle){
-      error = 1;
-      break;
-    }
+//    if (new_angle >= old_angle){
+//      error = 1;
+//      break;
+//    }
     step_size = desired_step();
   } while(step_size < 0);
   
@@ -101,10 +101,10 @@ int go_up(int step_size){
 		
     // if behaviour is not as expected, return non-zero error
     new_angle = angle_sensor.getAngle();
-    if (new_angle <= old_angle){
-      error = 1;
-      break;
-    }
+//    if (new_angle <= old_angle){
+//      error = 1;
+//      break;
+//    }
     step_size = desired_step();
   } while(step_size > 0);
 	
@@ -129,13 +129,14 @@ int stay_put(){
 
     // if behaviour is not as expected, return non-zero error
     new_angle = angle_sensor.getAngle();
-    if (abs(new_angle - old_angle) > tol){
-      error = 1;
-      break;
-    }
+//    if (abs(new_angle - old_angle) > tol){
+//      Serial.println(abs(new_angle - old_angle));
+//      error = 1;
+//      break;
+//    }
     step_size = desired_step();
   } while(step_size == 0); //NOTE: make threshold?
-	
+  
   return error;
 }
 
@@ -145,8 +146,11 @@ void error_handler (int error_code){
   // set converter to 0psi output
   regulator.zero();
   // wait until the thing is reset
-  while(true)
+  Serial.println("error");
+  while(true){
+    Serial.println(angle_sensor.getAngle());
     delay(50);
+  }
 }
 
 
@@ -159,6 +163,8 @@ void setup(){
   
   // set regulator to 0psi output to begin
   regulator.zero();
+  
+  Serial.begin(9600);
 }
 
 void loop() {
@@ -171,7 +177,7 @@ void loop() {
   
   int step_size;
   step_size = desired_step();
-  int error;
+  int error = 0;
   if (step_size > 0)
     error = go_up(step_size);
   else if(step_size < 0)
