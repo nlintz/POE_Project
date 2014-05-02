@@ -40,6 +40,7 @@ int desired_step(){
   //get force value
   float force;
   force = force_sensor.getForce();
+  Serial.println(force);
   
   //if it is below trheshold, don't move
   if (abs(force) <= forceCutoff)
