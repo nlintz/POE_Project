@@ -11,8 +11,8 @@ const int solenoidPin = 2;
 const int regulatorPin = 3;
 
 //NOTE: not final values
-const float MAX_ANGLE = 53.0;
-const float MIN_ANGLE = 0.0;
+const float MAX_ANGLE = 52.0;
+const float MIN_ANGLE = 5.0;
 
 //when the sensor is below this value, treat it as zero
 const float forceCutoff = 0.1;
