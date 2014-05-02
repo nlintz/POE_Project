@@ -68,7 +68,7 @@ int go_down(int step_size){
    */
 	
   int error = 0;
-  int old_angle, new_angle;
+  float old_angle, new_angle;
   
   do{
     
@@ -94,7 +94,7 @@ int go_up(int step_size){
    */
 	
   int error = 0;
-  int old_angle, new_angle;
+  float old_angle, new_angle;
   do{
     old_angle = angle_sensor.getAngle();
     regulator.increasePressure(step_size);
@@ -117,7 +117,8 @@ int stay_put(){
    */
 	
   int error = 0;
-  int old_angle, new_angle, step_size;
+  float old_angle, new_angle
+  int step_size;
   
   //tollerence in movement
   int tol = 1;
