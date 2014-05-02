@@ -1,7 +1,11 @@
-#include <ForceSensor.h>
-#include <Solenoid.h>
 #include <AngleSensor.h>
+#include <RegulatorTest.h>
+#include <ForceSensorTest.h>
 #include <Regulator.h>
+#include <Solenoid.h>
+#include <ForceSensor.h>
+#include <AngleSensorTest.h>
+
 #include <Servo.h>
 
 
@@ -18,10 +22,10 @@ const float MIN_ANGLE = 0.0;
 const float forceCutoff = 0.1;
 
 // devices
-Regulator regulator (regulatorPin);
-ForceSensor force_sensor (forceSensorPin);
+RegulatorTest regulator;
+ForceSensorTest force_sensor;
 Solenoid solenoid (solenoidPin);
-AngleSensor angle_sensor (angleSensorPin);
+AngleSensorTest* angle_sensor = &regulator._angle_sensor;
 
 
 int forceToStep(float force){
@@ -39,7 +43,7 @@ int desired_step(){
         
   //get force value
   float force;
-  force = force_sensor.getForce();
+  force = force_sensor.getForceSin();
   
   //if it is below trheshold, don't move
   if (abs(force) <= forceCutoff)
@@ -47,7 +51,10 @@ int desired_step(){
         
   //get angle value
   int angle;
-  angle = angle_sensor.getAngle();
+  angle = angle_sensor->getAngle();
+  
+  Serial.print("Angle: ");
+  Serial.print(angle);
   
   //don't go past the end points
   int stop = 0;
@@ -57,7 +64,6 @@ int desired_step(){
   	stop = 1;
   	
   int step_size = forceToStep(force) * stop;	
-
   return step_size;
 }
 
@@ -68,15 +74,15 @@ int go_down(int step_size){
    */
 	
   int error = 0;
-  int old_angle, new_angle;
+  float old_angle, new_angle;
   
   do{
     
-    old_angle = angle_sensor.getAngle();
+    old_angle = angle_sensor->getAngle();
     regulator.decreasePressure(step_size);
 		
     // if behaviour is not as expected, return non-zero error
-    new_angle = angle_sensor.getAngle();
+    new_angle = angle_sensor->getAngle();
     
     if (new_angle >= old_angle){
       error = 1;
@@ -94,13 +100,13 @@ int go_up(int step_size){
    */
 	
   int error = 0;
-  int old_angle, new_angle;
+  float old_angle, new_angle;
   do{
-    old_angle = angle_sensor.getAngle();
+    old_angle = angle_sensor->getAngle();
     regulator.increasePressure(step_size);
 		
     // if behaviour is not as expected, return non-zero error
-    new_angle = angle_sensor.getAngle();
+    new_angle = angle_sensor->getAngle();
     if (new_angle <= old_angle){
       error = 1;
       break;
@@ -117,18 +123,19 @@ int stay_put(){
    */
 	
   int error = 0;
-  int old_angle, new_angle, step_size;
+  float old_angle, new_angle;
+  int step_size;
   
   //tollerence in movement
   int tol = 1;
   do{
-    old_angle = angle_sensor.getAngle();
+    old_angle = angle_sensor->getAngle();
     
     // wait a bit to make sure the arm isn't moving
     delay(50);
 
     // if behaviour is not as expected, return non-zero error
-    new_angle = angle_sensor.getAngle();
+    new_angle = angle_sensor->getAngle();
     if (abs(new_angle - old_angle) > tol){
       error = 1;
       break;
@@ -145,8 +152,10 @@ void error_handler (int error_code){
   // set converter to 0psi output
   regulator.zero();
   // wait until the thing is reset
-  while(true)
+  Serial.println("error");
+  while(true){
     delay(50);
+  }
 }
 
 
@@ -159,6 +168,10 @@ void setup(){
   
   // set regulator to 0psi output to begin
   regulator.zero();
+  
+  //initiate serial connection
+  Serial.begin(9600);
+  
 }
 
 void loop() {
@@ -172,9 +185,9 @@ void loop() {
   int step_size;
   step_size = desired_step();
   int error;
-  if (step_size < 0)
+  if (step_size > 0)
     error = go_up(step_size);
-  else if(step_size > 0)
+  else if(step_size < 0)
     error = go_down(step_size);
   else
     error = stay_put();

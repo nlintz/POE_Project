@@ -13,11 +13,13 @@
 Regulator::Regulator(int pin)
 {
     _pin = pin;
-    servo.attach(_pin);
+    Servo servo;
+    _servo = servo;
+    _servo.attach(_pin);
 }
 
 void Regulator::zero(){
-	servo.write(180);
+	servo.write(170);
 }
 
 void Regulator::increasePressure(int step_size){
