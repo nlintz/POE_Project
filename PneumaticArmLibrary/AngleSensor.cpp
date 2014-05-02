@@ -20,6 +20,6 @@ float AngleSensor::getAngle()
     int reading = analogRead(_pin);
 	//assumed reading 0 to 2.5 volts on a 0 to 1024 scale
 	//and a angle range of 0 to 90
-    int angle = map(reading, 168, 360, 0, 53);
+    float angle = ((float)reading - 164.0)*(52.0/(366.0-164.0));
     return angle;
 }
