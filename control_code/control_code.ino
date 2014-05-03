@@ -9,7 +9,6 @@ const int angleSensorPin = A0;
 const int forceSensorPin = A1;
 const int solenoidPin = 9;
 const int regulatorPin = 3;
-Servo servo;
 
 //NOTE: not final values
 const float MAX_ANGLE = 49.0;
@@ -68,7 +67,7 @@ int go_down(int step_size){
    */
 	
   int error = 0;
-  float old_angle, new_angle;
+  int old_angle, new_angle;
   
   do{
     
@@ -93,7 +92,7 @@ int go_up(int step_size){
    * Control loop for closing (inflating) the arm
    */
   int error = 0;
-  float old_angle, new_angle;
+  int old_angle, new_angle;
   do{
     old_angle = angle_sensor.getAngle();
     regulator.increasePressure(step_size);
@@ -116,8 +115,7 @@ int stay_put(){
    */
 	
   int error = 0;
-  float old_angle, new_angle
-  int step_size;
+  int old_angle, new_angle, step_size;
   
   //tollerence in movement
   int tol = 1;
@@ -174,17 +172,16 @@ void loop() {
    *	2 go down
    *	3 stay put
    */
-//   servo.write(0);
-//  int step_size;
-//  step_size = desired_step();
-//  int error = 0;
-//  if (step_size > 0)
-//    error = go_up(step_size);
-//  else if(step_size < 0)
-//    error = go_down(step_size);
-//  else
-//    error = stay_put();
-//
+  int step_size;
+  step_size = desired_step();
+  int error = 0;
+  if (step_size > 0)
+    error = go_up(step_size);
+  else if(step_size < 0)
+    error = go_down(step_size);
+  else
+    error = stay_put();
+
 //  if (error)
 //    error_handler(error);
 }
