@@ -17,6 +17,7 @@ public:
     ForceSensor(int pin);
     float getForce();
     void calibrate();
+    void config();
     int getCalibratedReading();
 
 private:

@@ -15,6 +15,7 @@ class AngleSensor
 {
 public:
     AngleSensor(int pin);
+    void config();
     float getAngle();
 
 private:

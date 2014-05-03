@@ -17,6 +17,7 @@ public:
     Solenoid(int pin);
     char * getState();
     void open();
+    void config();
     void close();
 private:
     int _state;

@@ -13,7 +13,6 @@ ForceSensor::ForceSensor(int pin)
 {
     _pin = pin;
     _calibrationReference = NULL;
-    pinMode(pin, INPUT);
 }
 
 float ForceSensor::getForce()
@@ -32,6 +31,7 @@ int ForceSensor::getCalibratedReading()
 
 void ForceSensor::calibrate()
 {
+    pinMode(_pin, INPUT);
     const int n = 10;
     float reading = 0;
     for (int i=0; i<n; i++) // Get n readings and average them to calibrate

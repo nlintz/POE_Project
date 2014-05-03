@@ -153,7 +153,8 @@ void error_handler (int error_code){
 void setup(){
   // calibrate force sensor
   force_sensor.calibrate();
-
+  angle_sensor.config();
+  solenoid.config();
   regulator.config();
   
   // set solenoid to resevoir

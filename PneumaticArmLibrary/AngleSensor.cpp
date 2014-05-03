@@ -12,7 +12,10 @@
 AngleSensor::AngleSensor(int pin)
 {
     _pin = pin;
-    pinMode(pin, INPUT);
+}
+
+void AngleSensor::config() {
+	pinMode(_pin, INPUT);
 }
 
 float AngleSensor::getAngle()

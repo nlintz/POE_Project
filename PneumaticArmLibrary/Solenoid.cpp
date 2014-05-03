@@ -12,7 +12,12 @@ Solenoid::Solenoid(int pin)
 {
     _pin = pin;
     _state = 0;
-    pinMode(pin, OUTPUT);
+}
+
+void Solenoid::config()
+{
+    pinMode(_pin, OUTPUT);
+
 }
 
 void Solenoid::open()
