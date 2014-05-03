@@ -9,6 +9,7 @@ const int angleSensorPin = A0;
 const int forceSensorPin = A1;
 const int solenoidPin = 9;
 const int regulatorPin = 3;
+Servo servo;
 
 //NOTE: not final values
 const float MAX_ANGLE = 49.0;
@@ -40,7 +41,6 @@ int desired_step(){
   //get force value
   float force;
   force = force_sensor.getForce();
-  Serial.println(force);
   
   //if it is below trheshold, don't move
   if (abs(force) <= forceCutoff)
@@ -58,7 +58,6 @@ int desired_step(){
   	stop = 1;
   	
   int step_size = forceToStep(force) * stop;	
-//  Serial.println(step_size);
   return step_size;
 }
 
@@ -93,7 +92,6 @@ int go_up(int step_size){
   /*
    * Control loop for closing (inflating) the arm
    */
-	
   int error = 0;
   int old_angle, new_angle;
   do{
@@ -147,9 +145,7 @@ void error_handler (int error_code){
   // set converter to 0psi output
   regulator.zero();
   // wait until the thing is reset
-  Serial.println("error");
   while(true){
-    Serial.println(angle_sensor.getAngle());
     delay(50);
   }
 }
@@ -158,6 +154,8 @@ void error_handler (int error_code){
 void setup(){
   // calibrate force sensor
   force_sensor.calibrate();
+
+  regulator.config();
   
   // set solenoid to resevoir
   solenoid.open();
@@ -175,17 +173,17 @@ void loop() {
    *	2 go down
    *	3 stay put
    */
-  
-  int step_size;
-  step_size = desired_step();
-  int error = 0;
-  if (step_size > 0)
-    error = go_up(step_size);
-  else if(step_size < 0)
-    error = go_down(step_size);
-  else
-    error = stay_put();
-
-  if (error)
-    error_handler(error);
+//   servo.write(0);
+//  int step_size;
+//  step_size = desired_step();
+//  int error = 0;
+//  if (step_size > 0)
+//    error = go_up(step_size);
+//  else if(step_size < 0)
+//    error = go_down(step_size);
+//  else
+//    error = stay_put();
+//
+//  if (error)
+//    error_handler(error);
 }

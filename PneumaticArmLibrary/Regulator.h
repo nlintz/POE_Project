@@ -19,6 +19,8 @@ public:
     void zero();
     void increasePressure(int step_size);
     void decreasePressure(int step_size);
+    void setPosition(int position);
+    void config();
 
 private:
     int _pin;

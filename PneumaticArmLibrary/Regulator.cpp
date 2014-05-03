@@ -13,13 +13,16 @@
 Regulator::Regulator(int pin)
 {
 	Servo servo;
+	_pin = pin;
 	_servo = servo;
-    _pin = pin;
-    servo.attach(_pin);
 }
 
 void Regulator::zero(){
 	_servo.write(170);
+}
+
+void Regulator::config(){
+	_servo.attach(_pin);
 }
 
 void Regulator::increasePressure(int step_size){
@@ -27,7 +30,6 @@ void Regulator::increasePressure(int step_size){
 	step_size = abs(step_size);
 	int current_pos = _servo.read();
 	_servo.write(current_pos - step_size);
-	Serial.println(current_pos - step_size);
 	// delay so servo has time to move there
 	delay(50);
 }
@@ -37,7 +39,11 @@ void Regulator::decreasePressure(int step_size){
 	step_size = abs(step_size);
 	int current_pos = _servo.read();
 	_servo.write(current_pos + step_size);
-	Serial.println(current_pos + step_size);
 	// delay so servo has time to move there
 	delay(50);
+}
+
+void Regulator::setPosition(int position) {
+    _servo.write(position);
+    delay(50);
 }
