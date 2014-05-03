@@ -17,6 +17,9 @@ const float MIN_ANGLE = 5.0;
 //when the sensor is below this value, treat it as zero
 const float forceCutoff = 0.1;
 
+//shoud we break for errors
+const bool errorChecking = false;
+
 // devices
 Regulator regulator (regulatorPin);
 ForceSensor force_sensor (forceSensorPin);
@@ -67,7 +70,7 @@ int go_down(int step_size){
    */
 	
   int error = 0;
-  int old_angle, new_angle;
+  float old_angle, new_angle;
   
   do{
     
@@ -77,10 +80,12 @@ int go_down(int step_size){
     // if behaviour is not as expected, return non-zero error
     new_angle = angle_sensor.getAngle();
     
-//    if (new_angle >= old_angle){
-//      error = 1;
-//      break;
-//    }
+    if (errorChecking) {
+      if (new_angle >= old_angle){
+        error = 1;
+        break;
+      }
+    }
     step_size = desired_step();
   } while(step_size < 0);
   
@@ -92,17 +97,19 @@ int go_up(int step_size){
    * Control loop for closing (inflating) the arm
    */
   int error = 0;
-  int old_angle, new_angle;
+  float old_angle, new_angle;
   do{
     old_angle = angle_sensor.getAngle();
     regulator.increasePressure(step_size);
 		
     // if behaviour is not as expected, return non-zero error
     new_angle = angle_sensor.getAngle();
-//    if (new_angle <= old_angle){
-//      error = 1;
-//      break;
-//    }
+    if (errorChecking) {
+      if (new_angle <= old_angle){
+        error = 1;
+        break;
+      }
+    }
     step_size = desired_step();
   } while(step_size > 0);
 	
@@ -115,7 +122,8 @@ int stay_put(){
    */
 	
   int error = 0;
-  int old_angle, new_angle, step_size;
+  float old_angle, new_angle;
+  int step_size;
   
   //tollerence in movement
   int tol = 1;
@@ -127,11 +135,13 @@ int stay_put(){
 
     // if behaviour is not as expected, return non-zero error
     new_angle = angle_sensor.getAngle();
-//    if (abs(new_angle - old_angle) > tol){
-//      Serial.println(abs(new_angle - old_angle));
-//      error = 1;
-//      break;
-//    }
+    if (errorChecking) {
+      if (abs(new_angle - old_angle) > tol){
+        Serial.println(abs(new_angle - old_angle));
+        error = 1;
+        break;
+      }
+    }
     step_size = desired_step();
   } while(step_size == 0); //NOTE: make threshold?
   

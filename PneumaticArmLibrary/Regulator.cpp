@@ -19,6 +19,7 @@ Regulator::Regulator(int pin)
 
 void Regulator::zero(){
 	_servo.write(170);
+	delay(50);
 }
 
 void Regulator::config(){
