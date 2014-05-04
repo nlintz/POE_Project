@@ -15,10 +15,14 @@ const float MAX_ANGLE = 49.0;
 const float MIN_ANGLE = 5.0;
 
 //when the sensor is below this value, treat it as zero
-const float forceCutoff = 0.1;
+const float FORCE_CUTOFF = 0.1;
+
+//how much to let the arm drift in the wrong directio nbefore throwing an error
+const float WOBBLE_TOL = 10.0;
 
 //shoud we break for errors
-const bool errorChecking = false;
+const bool ERROR_CHECKING = false;
+const float TIME_DELAY = 1.5;
 
 // devices
 Regulator regulator (regulatorPin);
@@ -45,7 +49,7 @@ int desired_step(){
   force = force_sensor.getForce();
   
   //if it is below trheshold, don't move
-  if (abs(force) <= forceCutoff)
+  if (abs(force) <= FORCE_CUTOFF)
   	force = 0;
         
   //get angle value
@@ -71,8 +75,15 @@ int go_down(int step_size){
 	
   int error = 0;
   float old_angle, new_angle;
+  old_angle = angle_sensor.getAngle();
   
+  unsigned long old_time = millis();
   do{
+    // if enough time has gone by, recalculate the old time and angle
+    if (millis() - old_time > TIME_DELAY){
+      old_angle = angle_sensor.getAngle();
+      old_time = millis();
+    }
     
     old_angle = angle_sensor.getAngle();
     regulator.decreasePressure(step_size);
@@ -80,8 +91,8 @@ int go_down(int step_size){
     // if behaviour is not as expected, return non-zero error
     new_angle = angle_sensor.getAngle();
     
-    if (errorChecking) {
-      if (new_angle >= old_angle){
+    if (ERROR_CHECKING) {
+      if (new_angle >= old_angle + WOBBLE_TOL){
         error = 1;
         break;
       }
@@ -98,14 +109,21 @@ int go_up(int step_size){
    */
   int error = 0;
   float old_angle, new_angle;
+  old_angle = angle_sensor.getAngle();
+  
+  unsigned long old_time = millis();
   do{
-    old_angle = angle_sensor.getAngle();
+    // if enough time has gone by, recalculate the old time and angle
+    if (millis() - old_time > TIME_DELAY){
+      old_angle = angle_sensor.getAngle();
+      old_time = millis();
+    }
     regulator.increasePressure(step_size);
 		
     // if behaviour is not as expected, return non-zero error
     new_angle = angle_sensor.getAngle();
-    if (errorChecking) {
-      if (new_angle <= old_angle){
+    if (ERROR_CHECKING) {
+      if (new_angle <= old_angle - WOBBLE_TOL){
         error = 1;
         break;
       }
@@ -124,19 +142,24 @@ int stay_put(){
   int error = 0;
   float old_angle, new_angle;
   int step_size;
+  old_angle = angle_sensor.getAngle();
   
-  //tollerence in movement
-  int tol = 1;
+  unsigned long old_time = millis();
+  
   do{
-    old_angle = angle_sensor.getAngle();
+    // if enough time has gone by, recalculate the old time and angle
+    if (millis() - old_time > TIME_DELAY){
+      old_angle = angle_sensor.getAngle();
+      old_time = millis();
+    }
     
     // wait a bit to make sure the arm isn't moving
     delay(50);
 
     // if behaviour is not as expected, return non-zero error
     new_angle = angle_sensor.getAngle();
-    if (errorChecking) {
-      if (abs(new_angle - old_angle) > tol){
+    if (ERROR_CHECKING) {
+      if (abs(new_angle - old_angle) > WOBBLE_TOL){
         Serial.println(abs(new_angle - old_angle));
         error = 1;
         break;
@@ -167,13 +190,19 @@ void setup(){
   solenoid.config();
   regulator.config();
   
-  // set solenoid to resevoir
-  solenoid.open();
-  
   // set regulator to 0psi output to begin
   regulator.zero();
   
   Serial.begin(9600);
+  
+  // set solenoid to vent
+  solenoid.close();
+  
+  // delay to get the sens
+  delay((int)TIME_DELAY * 500);
+  
+  //set solenoid to resevoir
+  solenoid.open();
 }
 
 void loop() {
@@ -192,7 +221,9 @@ void loop() {
     error = go_down(step_size);
   else
     error = stay_put();
-
-//  if (error)
-//    error_handler(error);
+  
+  if(ERROR_CHECKING){
+    if (error)
+      error_handler(error);
+  }
 }
